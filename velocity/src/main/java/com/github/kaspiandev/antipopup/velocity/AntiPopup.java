@@ -8,6 +8,7 @@ import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
@@ -30,6 +31,7 @@ public class AntiPopup {
     private final APConfig config;
     private final Logger logger;
     private final Path dataDirectory;
+    private PacketEventsListener packetEventsListener;
 
     @Inject
     public AntiPopup(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) throws IOException {
@@ -47,9 +49,19 @@ public class AntiPopup {
         PacketEvents.setAPI(VelocityPacketEventsBuilder.build(server, pluginContainer, logger, dataDirectory));
         PacketEvents.getAPI().getSettings().debug(false).checkForUpdates(false);
         PacketEvents.getAPI().load();
-        PacketEvents.getAPI().getEventManager().registerListener(new PacketEventsListener(platform), PacketListenerPriority.LOW);
+        packetEventsListener = new PacketEventsListener(platform);
+        PacketEvents.getAPI().getEventManager().registerListener(packetEventsListener, PacketListenerPriority.LOW);
         PacketEvents.getAPI().init();
     }
 
+    @Subscribe
+    public void onProxyShutdown(ProxyShutdownEvent event) {
+        if (packetEventsListener != null) {
+            PacketEvents.getAPI().getEventManager().unregisterListener(packetEventsListener);
+        }
+
+        PacketEvents.getAPI().terminate();
+        logger.info("Disabled PacketEvents.");
+    }
 
 }

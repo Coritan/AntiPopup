@@ -52,6 +52,12 @@ public class ViaVersionHook implements Hook {
                      | NoSuchMethodException | InstantiationException ignored) {}
     }
 
+    @Override
+    public void unregister() {
+        registeredModifiers.clear();
+        modifiers.clear();
+    }
+
     private String getRegisteredMessage(ViaProtocolModifier<?> modifier) {
         String comparison = switch (modifier.getComparison()) {
             case EQUALS -> "equal to";

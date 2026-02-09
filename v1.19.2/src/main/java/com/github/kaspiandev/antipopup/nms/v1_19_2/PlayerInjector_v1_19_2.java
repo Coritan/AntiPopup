@@ -20,6 +20,8 @@ public class PlayerInjector_v1_19_2 implements PacketInjector {
     private static final String HANDLER_NAME = "antipopup_handler";
 
     public void inject(Player player) {
+        ServerGamePacketListenerImpl listener = ((CraftPlayer) player).getHandle().connection;
+
         ChannelDuplexHandler duplexHandler = new ChannelDuplexHandler() {
             @Override
             public void write(ChannelHandlerContext ctx, Object packet, ChannelPromise promise) throws Exception {
@@ -29,15 +31,12 @@ public class PlayerInjector_v1_19_2 implements PacketInjector {
                     Optional<ChatType.Bound> chatType = chatPacket.chatType().resolve(
                             ((CraftServer) Bukkit.getServer()).getServer().registryAccess());
 
-                    ((CraftPlayer) player).getHandle().connection.send(
-                            new ClientboundSystemChatPacket(chatType.orElseThrow().decorate(content), false));
+                    listener.send(new ClientboundSystemChatPacket(chatType.orElseThrow().decorate(content), false));
                     return;
                 }
                 super.write(ctx, packet, promise);
             }
         };
-
-        ServerGamePacketListenerImpl listener = ((CraftPlayer) player).getHandle().connection;
         Channel channel = listener.getConnection().channel;
         ChannelPipeline pipeline = channel.pipeline();
 

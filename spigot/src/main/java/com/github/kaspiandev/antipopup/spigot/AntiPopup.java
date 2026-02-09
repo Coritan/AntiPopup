@@ -54,6 +54,9 @@ public final class AntiPopup extends JavaPlugin {
     private static File propertiesFile;
     private static APConfig config;
     private static FoliaLib foliaLib;
+    private HookManager hookManager;
+    private LogFilter logFilter;
+    private PacketEventsListener packetEventsListener;
 
     public static FoliaLib getFoliaLib() {
         return foliaLib;
@@ -99,7 +102,7 @@ public final class AntiPopup extends JavaPlugin {
         ServerManager serverManager = PacketEvents.getAPI().getServerManager();
         PluginManager pluginManager = getPluginManager();
 
-        HookManager hookManager = new HookManager();
+        hookManager = new HookManager();
         ViaVersionHook viaVersionHook = new ViaVersionHook();
         viaVersionHook.addModifier(Via_1_19_to_1_19_1.class);
         viaVersionHook.addModifier(Via_1_20_4_to_1_20_5.class);
@@ -111,7 +114,8 @@ public final class AntiPopup extends JavaPlugin {
             getLogger().info("Enabled URL support.");
         }
 
-        PacketEvents.getAPI().getEventManager().registerListener(new PacketEventsListener(spigotPlatform), PacketListenerPriority.LOW);
+        packetEventsListener = new PacketEventsListener(spigotPlatform);
+        PacketEvents.getAPI().getEventManager().registerListener(packetEventsListener, PacketListenerPriority.LOW);
         PacketEvents.getAPI().init();
         getLogger().info("Initiated PacketEvents.");
 
@@ -153,7 +157,8 @@ public final class AntiPopup extends JavaPlugin {
         getLogger().info("Commands registered.");
 
         if (config.isFilterNotSecure()) {
-            ((org.apache.logging.log4j.core.Logger) LogManager.getRootLogger()).addFilter(new LogFilter());
+            logFilter = new LogFilter();
+            ((org.apache.logging.log4j.core.Logger) LogManager.getRootLogger()).addFilter(logFilter);
             getLogger().info("Logger filter enabled.");
         }
 
@@ -184,8 +189,24 @@ public final class AntiPopup extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (packetEventsListener != null) {
+            PacketEvents.getAPI().getEventManager().unregisterListener(packetEventsListener);
+        }
+
         PacketEvents.getAPI().terminate();
         getLogger().info("Disabled PacketEvents.");
+
+        if (hookManager != null) {
+            hookManager.unload();
+        }
+
+        if (logFilter != null) {
+            ((org.apache.logging.log4j.core.Logger) LogManager.getRootLogger()).removeFilter(logFilter);
+            getLogger().info("Removed logger filter.");
+        }
+
+        org.bukkit.event.HandlerList.unregisterAll(this);
+        getLogger().info("Unregistered all event listeners.");
     }
 
 }

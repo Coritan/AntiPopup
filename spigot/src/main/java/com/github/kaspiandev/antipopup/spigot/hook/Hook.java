@@ -6,4 +6,6 @@ public interface Hook {
 
     void register();
 
+    void unregister();
+
 }

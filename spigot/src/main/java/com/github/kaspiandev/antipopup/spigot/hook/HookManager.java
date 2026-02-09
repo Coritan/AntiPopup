@@ -29,4 +29,11 @@ public class HookManager {
         }
     }
 
+    public void unload() {
+        for (Hook hook : hooks) {
+            hook.unregister();
+        }
+        hooks.clear();
+    }
+
 }

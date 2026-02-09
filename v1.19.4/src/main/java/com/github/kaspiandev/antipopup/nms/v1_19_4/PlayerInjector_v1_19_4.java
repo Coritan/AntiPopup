@@ -38,6 +38,8 @@ public class PlayerInjector_v1_19_4 implements PacketInjector {
     }
 
     public void inject(Player player) {
+        ServerGamePacketListenerImpl listener = ((CraftPlayer) player).getHandle().connection;
+
         ChannelDuplexHandler duplexHandler = new ChannelDuplexHandler() {
             @Override
             public void write(ChannelHandlerContext ctx, Object packet, ChannelPromise promise) throws Exception {
@@ -49,15 +51,12 @@ public class PlayerInjector_v1_19_4 implements PacketInjector {
                     Optional<ChatType.Bound> chatType = chatPacket.chatType().resolve(
                             ((CraftServer) Bukkit.getServer()).getServer().registryAccess());
 
-                    ((CraftPlayer) player).getHandle().connection.send(
-                            new ClientboundSystemChatPacket(chatType.orElseThrow().decorate(content), false));
+                    listener.send(new ClientboundSystemChatPacket(chatType.orElseThrow().decorate(content), false));
                     return;
                 }
                 super.write(ctx, packet, promise);
             }
         };
-
-        ServerGamePacketListenerImpl listener = ((CraftPlayer) player).getHandle().connection;
         Channel channel = getConnection(listener).channel;
         ChannelPipeline pipeline = channel.pipeline();
 
