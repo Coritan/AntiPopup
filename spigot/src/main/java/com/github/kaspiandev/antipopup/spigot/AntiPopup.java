@@ -56,7 +56,6 @@ public final class AntiPopup extends JavaPlugin {
     private static FoliaLib foliaLib;
     private HookManager hookManager;
     private LogFilter logFilter;
-    private PacketEventsListener packetEventsListener;
 
     public static FoliaLib getFoliaLib() {
         return foliaLib;
@@ -114,7 +113,7 @@ public final class AntiPopup extends JavaPlugin {
             getLogger().info("Enabled URL support.");
         }
 
-        packetEventsListener = new PacketEventsListener(spigotPlatform);
+        PacketEventsListener packetEventsListener = new PacketEventsListener(spigotPlatform);
         PacketEvents.getAPI().getEventManager().registerListener(packetEventsListener, PacketListenerPriority.LOW);
         PacketEvents.getAPI().init();
         getLogger().info("Initiated PacketEvents.");
@@ -189,20 +188,11 @@ public final class AntiPopup extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (packetEventsListener != null) {
-            PacketEvents.getAPI().getEventManager().unregisterListener(packetEventsListener);
-        }
-
         PacketEvents.getAPI().terminate();
         getLogger().info("Disabled PacketEvents.");
 
         if (hookManager != null) {
             hookManager.unload();
-        }
-
-        if (logFilter != null) {
-            ((org.apache.logging.log4j.core.Logger) LogManager.getRootLogger()).removeFilter(logFilter);
-            getLogger().info("Removed logger filter.");
         }
 
         org.bukkit.event.HandlerList.unregisterAll(this);
